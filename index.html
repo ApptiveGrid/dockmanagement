@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dock Management Board</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 320px);
+      grid-auto-rows: 64px;
+      background-image:
+        linear-gradient(to right, #e5e7eb 1px, transparent 1px),
+        linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+      background-size: 320px 64px;
+      position: relative;
+    }
+    .time-axis {
+      position: sticky;
+      left: 0;
+      background-color: #f3f4f6;
+      z-index: 30;
+    }
+    .header-row {
+      position: sticky;
+      top: 0;
+      left: 64px;
+      display: flex;
+      z-index: 20;
+      background-color: #f3f4f6;
+    }
+    /* Linie für aktuelle Zeit */
+    #current-line {
+      position: absolute;
+      left: 0;
+      width: calc(100%);
+      height: 2px;
+      background: blue;
+      z-index: 25;
+    }
+  </style>
+</head>
+<body class="h-screen bg-gray-100 font-sans p-6 overflow-hidden">
+  <header class="mb-4 flex items-center justify-between">
+    <h1 class="text-3xl font-bold">Dock Board</h1>
+  </header>
+
+  <div id="calendar-container" class="flex h-[calc(100%-64px)] overflow-x-auto overflow-y-auto relative">
+    <!-- Zeitleiste -->
+    <div class="time-axis w-16 flex-shrink-0">
+      <div class="h-16"></div>
+      <ul>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">0:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">1:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">2:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">3:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">4:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">5:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">6:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">7:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">8:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">9:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">10:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">11:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">12:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">13:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">14:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">15:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">16:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">17:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">18:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">19:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">20:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">21:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">22:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">23:00</li>
+        <li class="h-16 flex items-center px-1 text-xs text-gray-500">24:00</li>
+      </ul>
+    </div>
+
+    <!-- Dock-Kalender Inhalt -->
+    <div class="relative">
+      <!-- Header Row -->
+      <div class="header-row">
+        <div class="grid grid-cols-12">
+
+        </div>
+      </div>
+      <!-- Grid Body -->
+      <div class="calendar-grid">
+        <!-- Linie für aktuelle Zeit -->
+        <div id="current-line"></div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // URLs zu deinen Datenquellen
+  const BOOKINGS_URL    = 'https://app.apptivegrid.de/api/a/62398e23b8b578b35b971df0/682c6a38ace0474b1df21c1b/BDOmRVrRfuAzfyGa0wACeSf7R4AteLLfe6UMmNfwSG5qpjPurRr/grids/68259c1d70da7f54bff18ea0/entities?layout=key&pageSize=300&pageIndex=1';
+  const DOCKS_URL = 'https://app.apptivegrid.de/api/a/62398e23b8b578b35b971df0/682c6875ace0477391f20d0c/BDOmRVrRfuAzfyGa0wACeSf7R4AteLLfe6UMmNfwSG5qpjPurRr/grids/682c6831ace047a987f20cf8/entities?layout=key&pageSize=300&pageIndex=1';
+
+  // Farb-Mapping für Status
+  const STATUS_CLASSES = {
+    'unbekannt': ['bg-gray-200','border-gray-500'],
+    '💬 Bestätigung senden': ['bg-gray-200','border-gray-500'],
+    '🟢 Bestätigt':     ['bg-green-200','border-green-500'],
+    '🟠 Noch unbestätigt': ['bg-orange-200','border-orange-500'],
+    '🔴 Wird nicht erreicht':     ['bg-red-200','border-red-500']
+  };
+
+  // Container-Elemente
+  const headerRow = document.querySelector('.header-row .grid');
+  const calendarGrid = document.querySelector('.calendar-grid');
+
+  // Hilfsfunktion: Stunde, Minute → y-Position in px
+  function timeToPx(date) {
+    const h = date.getHours();
+    const m = date.getMinutes();
+    return (h + m/60) * 64 + 64; // +64 für Header-Offset
+  }
+
+  // Daten laden und rendern
+  Promise.all([
+    fetch(DOCKS_URL).then(r => r.json()),
+    fetch(BOOKINGS_URL).then(r => r.json())
+  ]).then(([docks, bookings]) => {
+    // 1) Header: Docks
+    headerRow.innerHTML = '';
+    console.log(docks);
+    console.log(bookings);
+    docks.items.forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'h-16 w-[320px] flex items-center justify-center border-b border-gray-300 font-medium';
+      cell.textContent = d.name;
+      headerRow.append(cell);
+    });
+
+    // 2) Buchungen ins Grid einfügen
+    calendarGrid.innerHTML = `<div id="current-line"></div>`; // Reset, inkl. aktueller Zeit-Linie
+    bookings.items.forEach(b => {
+      const start = new Date(b.start);
+      const end   = new Date(b.ende);
+      const top   = timeToPx(start);
+      const height = (end - start) / (1000*60*60) * 64; // Stunden-Differenz × 64px
+      const dockIndex = docks.items.findIndex(d => d._id === b.dock._embedded.entity._id);
+      const left = dockIndex * 320;
+      console.log(b.status);
+      console.log(STATUS_CLASSES);
+      console.log(STATUS_CLASSES[b.status]);
+      let [bg, border] = STATUS_CLASSES['unbekannt'];
+      if(b.status && STATUS_CLASSES[b.status]) {
+        [bg, border] = STATUS_CLASSES[b.status];
+      }
+
+      const div = document.createElement('div');
+      div.className = `absolute ${bg} border-l-4 ${border} p-2 rounded`;
+      div.style.cssText = `top:${top}px; height:${height}px; left:${left}px; width:320px;`;
+      div.innerHTML = `
+        <p class="text-sm font-medium">${b.kennzeichen || 'Voranmeldung'}
+        <span class="text-xs text-gray-600">
+          ${start.getHours().toString().padStart(2,'0')}:${start.getMinutes().toString().padStart(2,'0')}
+          –
+          ${end.getHours().toString().padStart(2,'0')}:${end.getMinutes().toString().padStart(2,'0')}
+          </span>
+        </p>`;
+      calendarGrid.append(div);
+    });
+
+ 
+  }).catch(err => {
+    console.error('Fehler beim Laden der Daten:', err);
+  });
+       // 3) Linie für aktuelle Zeit aktualisieren
+    const line = document.getElementById('current-line');
+    function updateCurrentLine() {
+      const now = new Date();
+      const minutes = now.getHours()*60 + now.getMinutes();
+      const y = (minutes/60)*64 + 64;
+      line.style.top = `${y}px`;
+    }
+    updateCurrentLine();
+    setInterval(updateCurrentLine, 60000);
+
+  </script>
+</body>
+</html>
