@@ -90,8 +90,6 @@
       </div>
       <!-- Grid Body -->
       <div class="calendar-grid">
-        <!-- Linie für aktuelle Zeit -->
-        <div id="current-line"></div>
 
       </div>
     </div>
@@ -119,7 +117,7 @@
   function timeToPx(date) {
     const h = date.getHours();
     const m = date.getMinutes();
-    return (h + m/60) * 64 + 64; // +64 für Header-Offset
+    return (h + m/60) * 64 + 32; // +64 für Header-Offset
   }
 
   // Daten laden und rendern
@@ -168,21 +166,21 @@
         </p>`;
       calendarGrid.append(div);
     });
-
- 
-  }).catch(err => {
-    console.error('Fehler beim Laden der Daten:', err);
-  });
-       // 3) Linie für aktuelle Zeit aktualisieren
-    const line = document.getElementById('current-line');
+  // 3) Linie für aktuelle Zeit aktualisieren
+  const line = document.getElementById('current-line');
     function updateCurrentLine() {
       const now = new Date();
       const minutes = now.getHours()*60 + now.getMinutes();
-      const y = (minutes/60)*64 + 64;
+      const y = (minutes/60)*64 + 32;
       line.style.top = `${y}px`;
     }
     updateCurrentLine();
     setInterval(updateCurrentLine, 60000);
+ 
+  }).catch(err => {
+    console.error('Fehler beim Laden der Daten:', err);
+  });
+     
 
   </script>
 </body>
